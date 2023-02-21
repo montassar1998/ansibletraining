@@ -1,0 +1,13 @@
+---
+- hosts: all 
+  become: yes
+  tasks: 
+    - name: ensure NTP is installed
+      yum: name=ntp state=present
+      
+    - shell: | 
+        if ! rpm -qa | grep -qw ntp; then 
+          yum install -y ntp
+        fi
+    - name: Ensure ntp is running
+      service: name=ntpd state=started enabled=yes
