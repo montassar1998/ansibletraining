@@ -1,5 +1,5 @@
 ---
-- hosts: all 
+- hosts: multi 
   become: yes
   tasks: 
     - name: ensure NTP is installed
