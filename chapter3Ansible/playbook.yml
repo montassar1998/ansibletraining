@@ -2,9 +2,14 @@
 - hosts: multi 
   become: yes
   tasks: 
+
+
     - name: ensure NTP is installed
       yum: name=ntp state=present
-      
+    - name: yum update
+      become: true
+      yum:
+        update_cache: yes
     - name: install NTP if it does not exist 
       shell: | 
         if ! rpm -qa | grep -qw ntp; then 
