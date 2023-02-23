@@ -1,2 +1,6 @@
-[example]
+[ec2]
 xx.xx.xx.xx
+[ec2:vars]
+ansible_ssh_user=vagrant
+ansible_ssh_private_key_file=../../montaws.pem
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no'

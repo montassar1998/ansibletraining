@@ -15,6 +15,7 @@
         if ! rpm -qa | grep -qw ntp; then 
           yum install -y ntp
         fi
-
+    - name: ensure NTP is installed, after shell inline script
+      yum: name=ntp state=present
     - name: Ensure ntp is running
       service: name=ntpd state=started enabled=yes

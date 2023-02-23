@@ -1,0 +1,28 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "geerlingguy/centos7"
+  # vagrant will insert an ssh key to vm, for this test, we use the insecure key that comes with vagrant, they are local machines and no one will access outside the local computer
+  config.ssh.insert_key = false
+  #disable shared folder, not needed 
+  config.vm.synced_folder  ".", "/vagrant", disabled: true
+  config.vm.provider :virtualbox do |v| 
+    v.memory = 512
+    v.linked_clone = true
+  end
+  # app server 1 
+  config.vm.define "app1" do |app|
+    app.vm.hostname ="orc-app1.test"
+    app.vm.network :private_network, ip: "192.168.2.5"
+  end
+  # app server 2
+  config.vm.define "app2" do |app1|
+    app1.vm.hostname ="orc-app2.test"
+    app1.vm.network :private_network, ip: "192.168.2.6"
+  end
+  config.vm.define "db" do |db|
+    db.vm.hostname ="orc-db.test"
+    db.vm.network :private_network, ip: "192.168.2.7"
+  end
+end
