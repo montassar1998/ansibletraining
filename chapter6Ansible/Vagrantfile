@@ -17,8 +17,19 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "apache2" do |ubuntu_apache|
     ubuntu_apache.vm.box= "geerlingguy/ubuntu2004"
+
     ubuntu_apache.vm.hostname ="ubuntu"
     ubuntu_apache.vm.network :public_network, bridge: "eth0", ip: "172.22.71.45"
     ubuntu_apache.vm.network "private_network", ip: "192.168.33.11"
+    ubuntu_apache.vm.provision "shell", inline: <<-SHELL
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+
+    # Replace the repository link with an updated link
+    sudo sed -i 's/http:\/\/security.ubuntu.com\/ubuntu\//http:\/\/old-releases.ubuntu.com\/ubuntu\//g' /etc/apt/sources.list
+
+    # Update the package lists
+    sudo apt-get update
+
+    SHELL
   end
 end

@@ -1,6 +1,6 @@
 ---
 - name: Install Apache
-  hosts: centos
+  hosts: ubuntu
 
   become: true
   #these variable apply for the play or task in a play 
@@ -14,59 +14,36 @@
       https_proxy: https://example-proxy:80
     key: value
 
-  #vars_files:
-  #  - vars/apache_vars.yml
-  #  - vars/apache_default.yml 
-  #  - vars/apache-{{ ansible_os_family }}.yml
+#  vars_files:
+#    - vars/apache_vars.yml
+#    - vars/apache_default.yml 
+#    - vars/apache-{{ ansible_os_family }}.yml
 
   handlers: 
     - name: restart apache
       service: 
-        name: httpd
+        name: "{{ apache_service }}"
         state: restarted
-    - name: restart memcached
-      service: 
-        name: memcached
-        state: restarted
+
   pre_tasks:
     - name: Load variable files
       include_vars: "{{ item }}"
       with_first_found: 
-        - "vars/apache-{{ ansible_os_family }}.yml"
+        - "vars/apache_{{ ansible_os_family }}.yml"
         - "vars/apache_default.yml"
   tasks: 
     - debug: var=ansible_os_family
-    # environment variables, there is bash profile and global env which are more convenient
-    - name: Add GLOBAL env var to the remote user shell.
-      lineinfile: 
-        dest: "/etc/environment"
-        regexp: '^GLOBAL_ENV_VAR= '
-        line: 'GLOBAL_ENV_VAR=value_GLOBAL'
-    - name: Get value of GLOBAL environment variable
-      shell: 'source /etc/environment && echo $GLOBAL_ENV_VAR'
-      register: foo
-    - debug: msg="The variable is {{ foo.stdout }}".
 
-
-    - name: Add env var to the remote user shell.
-      lineinfile: 
-        dest: "~/.bash_profile"
-        regexp: '^ENV_VAR= '
-        line: 'ENV_VAR=value'
-      become: false
-    - name: Get value of environment variable
-      shell: 'source ~/.bash_profile && echo $ENV_VAR'
-      register: foo 
-    - debug: msg="The variable is {{ foo.stdout }}".
-
-
-
+    - debug: msg="{{apache_package}}"
 
     - name: Ensure Apache is installed.
-      yum: 
+      package: 
         name: "{{ apache_package }}" 
+     
         state: present
-    - name: copy test config files. 
+      register: foo 
+    - debug: var=foo
+    - name: copy test  config files. 
       copy: 
         src: ./test.conf
         dest: /etc/httpd/conf.d/test.conf
