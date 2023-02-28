@@ -1,7 +1,24 @@
 ---
 - name: Install Apache
   hosts: centos
+
   become: true
+  #these variable apply for the play or task in a play 
+  environment:
+    http_proxy: http://example-proxy:80
+    https_proxy: https://example-proxy:80
+
+  vars:
+    proxy_vars: 
+      http_proxy: http://example-proxy:80
+      https_proxy: https://example-proxy:80
+    key: value
+
+  #vars_files:
+  #  - vars/apache_vars.yml
+  #  - vars/apache_default.yml 
+  #  - vars/apache-{{ ansible_os_family }}.yml
+
   handlers: 
     - name: restart apache
       service: 
@@ -11,7 +28,14 @@
       service: 
         name: memcached
         state: restarted
+  pre_tasks:
+    - name: Load variable files
+      include_vars: "{{ item }}"
+      with_first_found: 
+        - "vars/apache-{{ ansible_os_family }}.yml"
+        - "vars/apache_default.yml"
   tasks: 
+    - debug: var=ansible_os_family
     # environment variables, there is bash profile and global env which are more convenient
     - name: Add GLOBAL env var to the remote user shell.
       lineinfile: 
@@ -36,17 +60,11 @@
     - debug: msg="The variable is {{ foo.stdout }}".
 
 
-    # task based environment setting 
-    - name:  Download a file.
-        get_url: 
-          url: http://ipv4.download.thinkbroadband.com/20MB.zip
-          dest: /tmp
-        #environment: 
-        #  http_proxy: 
+
 
     - name: Ensure Apache is installed.
       yum: 
-        name: httpd 
+        name: "{{ apache_package }}" 
         state: present
     - name: copy test config files. 
       copy: 
@@ -67,4 +85,5 @@
     # whenever we have a notify and a fail, the fail prevents the handler from running at the end of the playbook
     # we can force the handler execution by isong --force-handlers to make sure you want the handler to be ran at the end of your playbook 
     # unless you use the "meta: flush_handlers" 
+    # - fail: 
 
