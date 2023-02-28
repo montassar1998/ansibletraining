@@ -1,0 +1,70 @@
+---
+- name: Install Apache
+  hosts: centos
+  become: true
+  handlers: 
+    - name: restart apache
+      service: 
+        name: httpd
+        state: restarted
+    - name: restart memcached
+      service: 
+        name: memcached
+        state: restarted
+  tasks: 
+    # environment variables, there is bash profile and global env which are more convenient
+    - name: Add GLOBAL env var to the remote user shell.
+      lineinfile: 
+        dest: "/etc/environment"
+        regexp: '^GLOBAL_ENV_VAR= '
+        line: 'GLOBAL_ENV_VAR=value_GLOBAL'
+    - name: Get value of GLOBAL environment variable
+      shell: 'source /etc/environment && echo $GLOBAL_ENV_VAR'
+      register: foo
+    - debug: msg="The variable is {{ foo.stdout }}".
+
+
+    - name: Add env var to the remote user shell.
+      lineinfile: 
+        dest: "~/.bash_profile"
+        regexp: '^ENV_VAR= '
+        line: 'ENV_VAR=value'
+      become: false
+    - name: Get value of environment variable
+      shell: 'source ~/.bash_profile && echo $ENV_VAR'
+      register: foo 
+    - debug: msg="The variable is {{ foo.stdout }}".
+
+
+    # task based environment setting 
+    - name:  Download a file.
+        get_url: 
+          url: http://ipv4.download.thinkbroadband.com/20MB.zip
+          dest: /tmp
+        #environment: 
+        #  http_proxy: 
+
+    - name: Ensure Apache is installed.
+      yum: 
+        name: httpd 
+        state: present
+    - name: copy test config files. 
+      copy: 
+        src: ./test.conf
+        dest: /etc/httpd/conf.d/test.conf
+      notify: restart apache
+
+    # make sure handlers are exected  once after change after the step rather than the end of the playbook
+    - name: Make sure handlers are flushed immediately 
+      meta: flush_handlers
+
+    - name: Ensure apache is running and starts at boot.
+      service: 
+        name: httpd
+        state: started
+        enabled: true
+
+    # whenever we have a notify and a fail, the fail prevents the handler from running at the end of the playbook
+    # we can force the handler execution by isong --force-handlers to make sure you want the handler to be ran at the end of your playbook 
+    # unless you use the "meta: flush_handlers" 
+
